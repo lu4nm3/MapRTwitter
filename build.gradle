@@ -1,0 +1,32 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'application'
+
+//ext.deployHome = "$buildDir/deploy"
+//ext.tarDistDir = "gnip-twitter"
+
+//mainClassName = "com.attensity.gnip.twitter.StreamingConnection"
+
+configurations {
+    published
+}
+
+dependencies {
+    compile 'ch.qos.logback:logback-classic:1.1.2',
+            'ch.qos.logback:logback-core:1.1.2',
+            'com.typesafe:config:1.2.1',        // Apache License 2.0
+            'commons-lang:commons-lang:2.6',    // Apache License 2.0
+            'org.slf4j:slf4j-api:1.7.7',        // Apache License 2.0
+            'org.slf4j:slf4j-api:1.7.7',
+            'commons-daemon:commons-daemon:1.0.15',
+            'org.codehaus.jackson:jackson-core-asl:1.8.4',
+            'org.codehaus.jackson:jackson-mapper-asl:1.8.4'
+}
+
+repositories {
+    mavenCentral()
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.10'
+}
