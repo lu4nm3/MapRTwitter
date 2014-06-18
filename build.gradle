@@ -21,6 +21,11 @@ dependencies {
             'commons-daemon:commons-daemon:1.0.15',
             'org.codehaus.jackson:jackson-core-asl:1.8.4',
             'org.codehaus.jackson:jackson-mapper-asl:1.8.4'
+
+    compile 'com.twitter:hbc-core:2.0.1',
+            'org.twitter4j:twitter4j-core:4.0.1'
+
+//    compile 'org.apache.hadoop:hadoop-core:1.0.3-mapr-3.0.2'
 }
 
 repositories {
