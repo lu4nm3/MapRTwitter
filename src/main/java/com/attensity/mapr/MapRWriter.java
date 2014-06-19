@@ -73,6 +73,9 @@ public class MapRWriter implements Runnable {
 
     private void writeToMapRRawUncompressed(String json) {
         System.out.println(json);
+
+        byte[] messageBytes = json.getBytes();
+
     }
 
     private Map<String, Object> createMessageMap(String json) {

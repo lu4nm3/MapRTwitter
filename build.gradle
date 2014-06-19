@@ -11,12 +11,6 @@ repositories {
     maven {
         url "http://repository.mapr.com/maven/"
     }
-    maven {
-        url "https://repository.jboss.org/nexus/content/groups/public"
-    }
-//    flatDir {
-//        dirs 'lib'
-//    }
 
     mavenCentral()
 }
@@ -29,20 +23,16 @@ dependencies {
             'org.slf4j:slf4j-api:1.7.7',        // Apache License 2.0
             'commons-daemon:commons-daemon:1.0.15',
             'org.codehaus.jackson:jackson-core-asl:1.8.4',
-            'org.codehaus.jackson:jackson-mapper-asl:1.8.4'//,
-            //'javax.jms:jms:1.1'
+            'org.codehaus.jackson:jackson-mapper-asl:1.8.4'
 
     compile 'com.twitter:hbc-core:2.0.1',
             'org.twitter4j:twitter4j-core:4.0.1'
 
-    compile 'org.apache.hadoop:hadoop-core:1.0.3-mapr-3.0.2'
-//    compile file('maprfs-1.0.3-mapr-3.0.2.jar')
-//    runtime files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
-//    files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
-//    compile files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
-
-//    compile fileTree(dir: 'lib', include: '**/*.jar')
-//    compile name: 'maprfs-1.0.3-mapr-3.0.2.jar'
+    compile('org.apache.hadoop:hadoop-core:1.0.3-mapr-3.0.2') {
+        exclude group: 'javax.jms', module: 'jms'
+        exclude group: 'com.sun.jdmk', module: 'jmxtools'
+        exclude group: 'com.sun.jmx', module: 'jmxri'
+    }
 }
 
 task wrapper(type: Wrapper) {
