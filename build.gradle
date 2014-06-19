@@ -8,7 +8,18 @@ apply plugin: 'application'
 //mainClassName = "com.attensity.gnip.twitter.StreamingConnection"
 
 configurations {
-    published
+    compile
+}
+
+repositories {
+//    maven {
+//        url "http://repository.mapr.com/maven/"
+//    }
+//    flatDir {
+//        dirs 'lib'
+//    }
+
+    mavenCentral()
 }
 
 dependencies {
@@ -17,19 +28,22 @@ dependencies {
             'com.typesafe:config:1.2.1',        // Apache License 2.0
             'commons-lang:commons-lang:2.6',    // Apache License 2.0
             'org.slf4j:slf4j-api:1.7.7',        // Apache License 2.0
-            'org.slf4j:slf4j-api:1.7.7',
             'commons-daemon:commons-daemon:1.0.15',
             'org.codehaus.jackson:jackson-core-asl:1.8.4',
-            'org.codehaus.jackson:jackson-mapper-asl:1.8.4'
+            'org.codehaus.jackson:jackson-mapper-asl:1.8.4'//,
+            //'javax.jms:jms:1.1'
 
     compile 'com.twitter:hbc-core:2.0.1',
             'org.twitter4j:twitter4j-core:4.0.1'
 
 //    compile 'org.apache.hadoop:hadoop-core:1.0.3-mapr-3.0.2'
-}
+//    compile file('maprfs-1.0.3-mapr-3.0.2.jar')
+//    runtime files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
+//    files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
+    compile files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
 
-repositories {
-    mavenCentral()
+    compile fileTree(dir: 'lib', include: '**/*.jar')
+//    compile name: 'maprfs-1.0.3-mapr-3.0.2.jar'
 }
 
 task wrapper(type: Wrapper) {

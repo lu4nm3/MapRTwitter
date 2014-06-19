@@ -11,8 +11,6 @@ public class TwitterStreamConfiguration {
         public static final String API_SECRET = "stream.twitter.authentication.apiSecret";
     }
 
-    public static final String DATA_STREAM = "stream.twitter.dataStream";
-
     public static class HBC {
         public static final String CLIENT_NAME = "stream.twitter.hbc.clientName";
         public static final String CONNECTION_RETRIES = "stream.twitter.hbc.connectionRetries";
