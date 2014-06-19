@@ -12,7 +12,7 @@ repositories {
         url "http://repository.mapr.com/maven/"
     }
     maven {
-        url "http://repository.mapr.com/maven/"
+        url "https://repository.jboss.org/nexus/content/groups/public"
     }
 //    flatDir {
 //        dirs 'lib'
