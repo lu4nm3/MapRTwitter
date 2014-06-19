@@ -1,8 +1,8 @@
-package com.attensity.mapr;
+package com.attensity;
 
 import com.attensity.core.StreamManager;
 import com.attensity.twitter.ClientFactory;
-import com.attensity.twitter.TwitterExtractor;
+import com.attensity.mapr.MapRWriter;
 import com.attensity.twitter.TwitterStreamManager;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -17,20 +17,20 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * @author lmedina
  */
-public class MapR {
+public class Main {
     private Config configuration;
 
     private BlockingQueue<String> messageQueue;
     private StreamManager streamManager;
 
     private ExecutorService executorService;
-    private List<TwitterExtractor> extractors;
+    private List<MapRWriter> extractors;
 
-    private static MapR mapR = new MapR();
+    private static Main main = new Main();
 
     public static void main(String[] args) {
-        mapR.init();
-        mapR.start();
+        main.init();
+        main.start();
 
         try {
             Thread.sleep(10000);
@@ -38,7 +38,7 @@ public class MapR {
             e.printStackTrace();
         }
 
-        mapR.stop();
+        main.stop();
 
         System.exit(0);
     }
@@ -64,7 +64,7 @@ public class MapR {
         executorService = Executors.newFixedThreadPool(5);
 
         for (int i = 0; i < 5; i++) {
-            TwitterExtractor extractor = new TwitterExtractor(messageQueue);
+            MapRWriter extractor = new MapRWriter(messageQueue, WriteTo.MAPR_RAW_UNCOMPRESSED);
             extractors.add(extractor);
 
             executorService.submit(extractor);
@@ -72,10 +72,7 @@ public class MapR {
     }
 
     private void shutdownProcessingLoop() {
-//        if (null != executorService) {
-//            executorService.shutdownNow();
-//        }
-        for (TwitterExtractor extractor : extractors) {
+        for (MapRWriter extractor : extractors) {
             extractor.shutdown();
         }
     }

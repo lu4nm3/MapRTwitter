@@ -5,16 +5,15 @@ apply plugin: 'application'
 //ext.deployHome = "$buildDir/deploy"
 //ext.tarDistDir = "gnip-twitter"
 
-//mainClassName = "com.attensity.gnip.twitter.StreamingConnection"
-
-configurations {
-    compile
-}
+mainClassName = "com.attensity.Main"
 
 repositories {
-//    maven {
-//        url "http://repository.mapr.com/maven/"
-//    }
+    maven {
+        url "http://repository.mapr.com/maven/"
+    }
+    maven {
+        url "http://repository.mapr.com/maven/"
+    }
 //    flatDir {
 //        dirs 'lib'
 //    }
@@ -36,13 +35,13 @@ dependencies {
     compile 'com.twitter:hbc-core:2.0.1',
             'org.twitter4j:twitter4j-core:4.0.1'
 
-//    compile 'org.apache.hadoop:hadoop-core:1.0.3-mapr-3.0.2'
+    compile 'org.apache.hadoop:hadoop-core:1.0.3-mapr-3.0.2'
 //    compile file('maprfs-1.0.3-mapr-3.0.2.jar')
 //    runtime files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
 //    files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
-    compile files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
+//    compile files('lib/maprfs-1.0.3-mapr-3.0.2.jar')
 
-    compile fileTree(dir: 'lib', include: '**/*.jar')
+//    compile fileTree(dir: 'lib', include: '**/*.jar')
 //    compile name: 'maprfs-1.0.3-mapr-3.0.2.jar'
 }
 
