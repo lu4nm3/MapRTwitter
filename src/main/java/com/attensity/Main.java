@@ -1,12 +1,13 @@
 package com.attensity;
 
 import com.attensity.core.StreamManager;
-import com.attensity.twitter.ClientFactory;
 import com.attensity.mapr.MapRWriter;
+import com.attensity.twitter.ClientFactory;
 import com.attensity.twitter.TwitterStreamManager;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -44,7 +45,7 @@ public class Main {
     }
 
     private void init() {
-        configuration = ConfigFactory.load("twitter/application.conf");
+        configuration = ConfigFactory.parseFile(new File("configuration/twitter/application.conf"));
         messageQueue = new LinkedBlockingQueue<>();
         extractors = new LinkedList<>();
         streamManager = new TwitterStreamManager(new ClientFactory(configuration, messageQueue).create());

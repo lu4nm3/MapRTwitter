@@ -2,10 +2,12 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'application'
 
-//ext.deployHome = "$buildDir/deploy"
-//ext.tarDistDir = "gnip-twitter"
-
 mainClassName = "com.attensity.Main"
+
+applicationDistribution.from("$rootDir/configuration") {
+    include '**/*.conf', '**/*.xml'
+    into "/bin/configuration"
+}
 
 repositories {
     maven {
