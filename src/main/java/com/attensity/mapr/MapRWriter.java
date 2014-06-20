@@ -44,7 +44,7 @@ public class MapRWriter implements Runnable {
         this.twitterMessageQueue = twitterMessageQueue;
         this.writeTo = writeTo;
 
-//        initMapR();
+        initMapR();
     }
 
     private void initMapR() {
@@ -115,15 +115,15 @@ public class MapRWriter implements Runnable {
     private void writeRawUncompressedToMapR(String json) {
 //        LOGGER.info("Twitter Message - " + json);
 
-        System.out.println(json);
+//        System.out.println(json);
         byte[] messageBytes = json.getBytes();
 
-//        try {
-//            outputStream.write(messageBytes);
+        try {
+            outputStream.write(messageBytes);
             messages.incrementAndGet();
-//        } catch (IOException e) {
-//            LOGGER.error("Error writing to the MapR output stream.");
-//        }
+        } catch (IOException e) {
+            LOGGER.error("Error writing to the MapR output stream.");
+        }
     }
 
 //    private ObjectMapper mapper;

@@ -37,12 +37,6 @@ public class Main {
         main.init();
         main.start();
 
-//        try {
-//            Thread.sleep(10000);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-
         main.stop();
 
         System.exit(0);
