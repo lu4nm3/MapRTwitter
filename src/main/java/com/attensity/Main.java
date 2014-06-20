@@ -6,6 +6,8 @@ import com.attensity.twitter.ClientFactory;
 import com.attensity.twitter.TwitterStreamManager;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -20,6 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author lmedina
  */
 public class Main {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+
     private Config configuration;
 
     private BlockingQueue<String> messageQueue;
@@ -29,7 +33,7 @@ public class Main {
     private List<MapRWriter> extractors;
 
     private AtomicLong messages = new AtomicLong(0);
-    private static final long MAX_MESSAGES = 10000;
+    private static final long MAX_MESSAGES = 100000;
 
     private static Main main = new Main();
 
@@ -56,6 +60,8 @@ public class Main {
 
         while (messages.get() < MAX_MESSAGES) {
         }
+
+        LOGGER.info("Final message count - " + messages.get());
     }
 
     private void stop() {
