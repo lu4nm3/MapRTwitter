@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author lmedina
@@ -25,6 +26,7 @@ public class MapRWriter implements Runnable {
     private BlockingQueue<String> twitterMessageQueue;
     private WriteTo writeTo;
 
+    private AtomicLong messages;
     private AtomicBoolean shutdown = new AtomicBoolean(false);
 
     // MapR
@@ -37,7 +39,8 @@ public class MapRWriter implements Runnable {
     private FSDataOutputStream outputStream;
 //    private FSDataInputStream inputStream;
 
-    public MapRWriter(BlockingQueue<String> twitterMessageQueue, WriteTo writeTo) {
+    public MapRWriter(AtomicLong messages, BlockingQueue<String> twitterMessageQueue, WriteTo writeTo) {
+        this.messages = messages;
         this.twitterMessageQueue = twitterMessageQueue;
         this.writeTo = writeTo;
 
@@ -110,12 +113,14 @@ public class MapRWriter implements Runnable {
     }
 
     private void writeRawUncompressedToMapR(String json) {
-        System.out.println(json);
+//        LOGGER.info("Twitter Message - " + json);
 
+        System.out.println(json);
         byte[] messageBytes = json.getBytes();
 
 //        try {
 //            outputStream.write(messageBytes);
+            messages.incrementAndGet();
 //        } catch (IOException e) {
 //            LOGGER.error("Error writing to the MapR output stream.");
 //        }

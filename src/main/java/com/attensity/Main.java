@@ -14,6 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author lmedina
@@ -27,17 +28,20 @@ public class Main {
     private ExecutorService executorService;
     private List<MapRWriter> extractors;
 
+    private AtomicLong messages = new AtomicLong(0);
+    private static final long MAX_MESSAGES = 10000;
+
     private static Main main = new Main();
 
     public static void main(String[] args) {
         main.init();
         main.start();
 
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Thread.sleep(10000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
 
         main.stop();
 
@@ -54,6 +58,10 @@ public class Main {
     private void start() {
         streamManager.connect();
         processMessages();
+
+
+        while (messages.get() < MAX_MESSAGES) {
+        }
     }
 
     private void stop() {
@@ -65,7 +73,7 @@ public class Main {
         executorService = Executors.newFixedThreadPool(5);
 
         for (int i = 0; i < 5; i++) {
-            MapRWriter extractor = new MapRWriter(messageQueue, WriteTo.MAPR_RAW_UNCOMPRESSED);
+            MapRWriter extractor = new MapRWriter(messages, messageQueue, WriteTo.MAPR_RAW_UNCOMPRESSED);
             extractors.add(extractor);
 
             executorService.submit(extractor);
