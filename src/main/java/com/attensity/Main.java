@@ -1,5 +1,7 @@
 package com.attensity;
 
+import com.attensity.configuration.Configuration;
+import com.attensity.core.RunnableWriter;
 import com.attensity.core.StreamManager;
 import com.attensity.mapr.MapRWriter;
 import com.attensity.twitter.ClientFactory;
@@ -30,10 +32,10 @@ public class Main {
     private StreamManager streamManager;
 
     private ExecutorService executorService;
-    private List<MapRWriter> extractors;
+    private List<RunnableWriter> writers;
 
     private AtomicLong messages = new AtomicLong(0);
-    private static final long MAX_MESSAGES = 100000;
+    private long previousCountValue;
 
     private static Main main = new Main();
 
@@ -43,13 +45,14 @@ public class Main {
 
         main.stop();
 
+        LOGGER.info("Exiting...");
         System.exit(0);
     }
 
     private void init() {
-        configuration = ConfigFactory.parseFile(new File("configuration/twitter/application.conf"));
+        configuration = ConfigFactory.parseFile(new File("configuration/application.conf"));
         messageQueue = new LinkedBlockingQueue<>();
-        extractors = new LinkedList<>();
+        writers = new LinkedList<>();
         streamManager = new TwitterStreamManager(new ClientFactory(configuration, messageQueue).create());
     }
 
@@ -58,7 +61,15 @@ public class Main {
         processMessages();
 
 
-        while (messages.get() < MAX_MESSAGES) {
+        int maxMessages = configuration.getInt(Configuration.MAX_MESSAGES);
+
+        while (messages.get() < maxMessages) {
+            long currentCount = messages.get();
+
+            if (currentCount % 100 == 0 && currentCount != previousCountValue) {
+                LOGGER.info("Message count update - " + currentCount);
+                previousCountValue = currentCount;
+            }
         }
 
         LOGGER.info("Final message count - " + messages.get());
@@ -70,19 +81,31 @@ public class Main {
     }
 
     private void processMessages() {
+        createRunnableWriters();
+
         executorService = Executors.newFixedThreadPool(5);
 
-        for (int i = 0; i < 5; i++) {
-            MapRWriter extractor = new MapRWriter(messages, messageQueue, WriteTo.MAPR_RAW_UNCOMPRESSED);
-            extractors.add(extractor);
+        for (RunnableWriter writer : writers) {
+            executorService.submit(writer);
+        }
+    }
 
-            executorService.submit(extractor);
+    private void createRunnableWriters() {
+        String mode = configuration.getString(Configuration.WRITE_MODE);
+        int numWriters = configuration.getInt(Configuration.NUM_WRITERS);
+
+        for (int i = 0; i < numWriters; i++) {
+            if (mode.equals(WriteMode.MAPR_RAW_UNCOMPRESSED.getValue())) {
+                writers.add(new MapRWriter(configuration, messages, messageQueue, WriteMode.MAPR_RAW_UNCOMPRESSED));
+            }
         }
     }
 
     private void shutdownProcessingLoop() {
-        for (MapRWriter extractor : extractors) {
-            extractor.shutdown();
+        for (RunnableWriter writer : writers) {
+            writer.shutdown();
         }
+
+        LOGGER.info("Shut down writers.");
     }
 }

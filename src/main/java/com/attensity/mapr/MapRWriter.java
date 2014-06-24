@@ -1,6 +1,8 @@
 package com.attensity.mapr;
 
-import com.attensity.WriteTo;
+import com.attensity.WriteMode;
+import com.attensity.core.RunnableWriter;
+import com.typesafe.config.Config;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -18,19 +20,19 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author lmedina
  */
-public class MapRWriter implements Runnable {
+public class MapRWriter extends RunnableWriter {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapRWriter.class);
 
     private static final long TIMEOUT = 5;
 
+    private Config configuration;
+    private AtomicLong messageCount;
     private BlockingQueue<String> twitterMessageQueue;
-    private WriteTo writeTo;
+    private WriteMode writeMode;
 
-    private AtomicLong messages;
     private AtomicBoolean shutdown = new AtomicBoolean(false);
 
     // MapR
-    private static final String DIR_NAME = "/pipeline";
     private Configuration conf;
     private FileSystem fileSystem;
     private Path dirPath;
@@ -39,21 +41,25 @@ public class MapRWriter implements Runnable {
     private FSDataOutputStream outputStream;
 //    private FSDataInputStream inputStream;
 
-    public MapRWriter(AtomicLong messages, BlockingQueue<String> twitterMessageQueue, WriteTo writeTo) {
-        this.messages = messages;
+    public MapRWriter(Config configuration, AtomicLong messageCount, BlockingQueue<String> twitterMessageQueue, WriteMode writeMode) {
+        this.configuration = configuration;
+        this.messageCount = messageCount;
         this.twitterMessageQueue = twitterMessageQueue;
-        this.writeTo = writeTo;
+        this.writeMode = writeMode;
 
-        initMapR();
+        if (configuration.getString(com.attensity.configuration.Configuration.WRITE_MODE).contains("mapR")) {
+            initMapR();
+        }
     }
 
     private void initMapR() {
         try {
+            String dirName = configuration.getString(com.attensity.configuration.Configuration.MapR.Raw.DIR_NAME);
             conf = new Configuration();
             fileSystem = FileSystem.get(conf);
-            dirPath = new Path(DIR_NAME + "/dir");
-            wFilePath = new Path(DIR_NAME + "/file.w");
-            rFilePath = wFilePath;//new Path(DIR_NAME + "file.r");
+            dirPath = new Path(dirName + "/dir");
+            wFilePath = new Path(dirName + "/file.w");
+            //rFilePath = wFilePath;//new Path(DIR_NAME + "file.r");
 
             outputStream = fileSystem.create(wFilePath,
                                              true,
@@ -61,14 +67,13 @@ public class MapRWriter implements Runnable {
                                              (short) 1,
                                              (long)(64*1024*1024));
 
+            LOGGER.info("wFilePath - " + wFilePath);
 //            inputStream = fileSystem.open(rFilePath);
         } catch (IOException e) {
             LOGGER.error("Unable to initialize MapR output stream.", e);
+        } catch (Exception e) {
+            LOGGER.error("There was a problem initializing variables for MapR.", e);
         }
-    }
-
-    public void shutdown() {
-        shutdown.set(true);
     }
 
     @Override
@@ -78,7 +83,7 @@ public class MapRWriter implements Runnable {
                 String json = twitterMessageQueue.poll(TIMEOUT, TimeUnit.MILLISECONDS);
 
                 if (StringUtils.isNotBlank(json)) {
-                    switch (writeTo) {
+                    switch (writeMode) {
                         case MAPR_RAW_UNCOMPRESSED: {
                             writeRawUncompressedToMapR(json);
                         }
@@ -104,6 +109,8 @@ public class MapRWriter implements Runnable {
                 LOGGER.info("Finished writing to MapR.");
             } catch (IOException e) {
                 LOGGER.error("Unable to close MapR output stream.", e);
+            } catch (Exception e) {
+                LOGGER.error("Unknown error closing the MapR output stream.", e);
             }
         }
     }
@@ -115,14 +122,16 @@ public class MapRWriter implements Runnable {
     private void writeRawUncompressedToMapR(String json) {
 //        LOGGER.info("Twitter Message - " + json);
 
-//        System.out.println(json);
+        System.out.println(json);
         byte[] messageBytes = json.getBytes();
 
         try {
             outputStream.write(messageBytes);
-            messages.incrementAndGet();
+            messageCount.incrementAndGet();
         } catch (IOException e) {
             LOGGER.error("Error writing to the MapR output stream.");
+        } catch (Exception e) {
+            LOGGER.error("Unknown error writing to the MapR output stream.", e);
         }
     }
 

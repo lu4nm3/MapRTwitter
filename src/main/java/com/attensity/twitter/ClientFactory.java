@@ -1,6 +1,6 @@
 package com.attensity.twitter;
 
-import com.attensity.configuration.TwitterStreamConfiguration;
+import com.attensity.configuration.Configuration;
 import com.attensity.core.AbstractFactory;
 import com.twitter.hbc.BasicReconnectionManager;
 import com.twitter.hbc.ClientBuilder;
@@ -39,19 +39,19 @@ public class ClientFactory implements AbstractFactory<Client> {
     public Client create() {
         return new ClientBuilder().authentication(createAuthentication())
                 .endpoint(createStreamingEndpoint())
-                .gzipEnabled(configuration.getBoolean(TwitterStreamConfiguration.HBC.GZIP_ENABLED))
+                .gzipEnabled(configuration.getBoolean(Configuration.Stream.Twitter.HBC.GZIP_ENABLED))
                 .hosts(HttpHosts.STREAM_HOST)
-                .name(configuration.getString(TwitterStreamConfiguration.HBC.CLIENT_NAME))
+                .name(configuration.getString(Configuration.Stream.Twitter.HBC.CLIENT_NAME))
                 .processor(new StringDelimitedProcessor(messageQueue))
                 .reconnectionManager(createReconnectionManager())
                 .build();
     }
 
     private Authentication createAuthentication() {
-        return new OAuth1(configuration.getString(TwitterStreamConfiguration.Authentication.API_KEY),
-                          configuration.getString(TwitterStreamConfiguration.Authentication.API_SECRET),
-                          configuration.getString(TwitterStreamConfiguration.Authentication.ACCESS_TOKEN),
-                          configuration.getString(TwitterStreamConfiguration.Authentication.ACCESS_TOKEN_SECRET));
+        return new OAuth1(configuration.getString(Configuration.Stream.Twitter.Authentication.API_KEY),
+                          configuration.getString(Configuration.Stream.Twitter.Authentication.API_SECRET),
+                          configuration.getString(Configuration.Stream.Twitter.Authentication.ACCESS_TOKEN),
+                          configuration.getString(Configuration.Stream.Twitter.Authentication.ACCESS_TOKEN_SECRET));
     }
 
     private StreamingEndpoint createStreamingEndpoint() {
@@ -60,13 +60,13 @@ public class ClientFactory implements AbstractFactory<Client> {
 
     private DefaultStreamingEndpoint getConfiguredEndpoint(DefaultStreamingEndpoint endpoint) {
         endpoint.setBackfillCount(Constants.MAX_BACKOFF_COUNT);
-        endpoint.stallWarnings(configuration.getBoolean(TwitterStreamConfiguration.HBC.STALL_WARNINGS));
+        endpoint.stallWarnings(configuration.getBoolean(Configuration.Stream.Twitter.HBC.STALL_WARNINGS));
         endpoint.filterLevel(Constants.FilterLevel.None);
 
         return endpoint;
     }
 
     private ReconnectionManager createReconnectionManager() {
-        return new BasicReconnectionManager(configuration.getInt(TwitterStreamConfiguration.HBC.CONNECTION_RETRIES));
+        return new BasicReconnectionManager(configuration.getInt(Configuration.Stream.Twitter.HBC.CONNECTION_RETRIES));
     }
 }
