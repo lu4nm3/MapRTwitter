@@ -55,6 +55,11 @@ public class MapRWriter extends RunnableWriter {
     private void initMapR() {
         try {
             String dirName = configuration.getString(com.attensity.configuration.Configuration.MapR.Raw.DIR_NAME);
+            boolean overwrite = configuration.getBoolean(com.attensity.configuration.Configuration.MapR.Raw.OVERWRITE);
+            int bufferSize = configuration.getInt(com.attensity.configuration.Configuration.MapR.Raw.BUFFER_SIZE);
+            int replication = configuration.getInt(com.attensity.configuration.Configuration.MapR.Raw.REPLICATION);
+            long blockSize = configuration.getLong(com.attensity.configuration.Configuration.MapR.Raw.BLOCK_SIZE);
+
             conf = new Configuration();
             fileSystem = FileSystem.get(conf);
             dirPath = new Path(dirName + "/dir");
@@ -62,10 +67,10 @@ public class MapRWriter extends RunnableWriter {
             //rFilePath = wFilePath;//new Path(DIR_NAME + "file.r");
 
             outputStream = fileSystem.create(wFilePath,
-                                             true,
-                                             512,
-                                             (short) 1,
-                                             (long)(64*1024*1024));
+                                             overwrite,
+                                             bufferSize,
+                                             (short) replication,
+                                             blockSize);
 
             LOGGER.info("wFilePath - " + wFilePath);
 //            inputStream = fileSystem.open(rFilePath);
@@ -110,7 +115,7 @@ public class MapRWriter extends RunnableWriter {
             } catch (IOException e) {
                 LOGGER.error("Unable to close MapR output stream.", e);
             } catch (Exception e) {
-                LOGGER.error("Unknown error closing the MapR output stream.", e);
+                LOGGER.error("Unknown error closing MapR output stream.", e);
             }
         }
     }

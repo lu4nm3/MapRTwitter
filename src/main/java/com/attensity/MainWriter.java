@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author lmedina
  */
-public class Main {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+public class MainWriter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MainWriter.class);
 
     private Config configuration;
 
@@ -37,13 +37,13 @@ public class Main {
     private AtomicLong messages = new AtomicLong(0);
     private long previousCountValue;
 
-    private static Main main = new Main();
+    private static MainWriter mainWriter = new MainWriter();
 
     public static void main(String[] args) {
-        main.init();
-        main.start();
+        mainWriter.init();
+        mainWriter.start();
 
-        main.stop();
+        mainWriter.stop();
 
         LOGGER.info("Exiting...");
         System.exit(0);
