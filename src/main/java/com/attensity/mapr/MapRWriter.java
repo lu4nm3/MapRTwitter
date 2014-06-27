@@ -25,6 +25,8 @@ public class MapRWriter extends RunnableWriter {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapRWriter.class);
 
     private static final long TIMEOUT = 5;
+    public static final String MAPR_TABLE_NAME = "/mapr/MapR_EMR.amazonaws.com/pipeline/tweets";
+    final String TWITTER="EEE MMM dd HH:mm:ss ZZZZZ yyyy";
 
     private Config configuration;
     private AtomicLong messageCount;
@@ -40,6 +42,12 @@ public class MapRWriter extends RunnableWriter {
     private Path wFilePath;
     private Path rFilePath;
     private FSDataOutputStream outputStream;
+
+    // Mapr Table
+    private ObjectMapper mapper = new ObjectMapper();
+    HTable table;
+    Configuration hBaseConfiguration;
+
 //    private FSDataInputStream inputStream;
 
     public MapRWriter(Config configuration, AtomicLong messageCount, BlockingQueue<String> twitterMessageQueue, WriteMode writeMode) {
@@ -48,8 +56,18 @@ public class MapRWriter extends RunnableWriter {
         this.twitterMessageQueue = twitterMessageQueue;
         this.writeMode = writeMode;
 
-        if (configuration.getString(com.attensity.configuration.Configuration.WRITE_MODE).contains("mapR")) {
-            initMapR();
+        try {
+            if(this.writeMode.getValue().startsWith("mapRHive")) {
+                LOGGER.info("Initializing mapr table...");
+                initMapRTable();
+            }
+            else if (this.writeMode.getValue().contains("mapR")) {
+                LOGGER.info("Initializing mapr-fs...");
+                initMapR();
+            }
+        }
+        catch(Exception e) {
+            LOGGER.error("Error initializing with configuration writemode: " + writeMode);
         }
     }
 
@@ -82,12 +100,30 @@ public class MapRWriter extends RunnableWriter {
 //                                             blockSize);
 
             LOGGER.info("wFilePath - " + wFilePath);
+
 //            inputStream = fileSystem.open(rFilePath);
         } catch (IOException e) {
             LOGGER.error("Unable to initialize MapR output stream.", e);
         } catch (Exception e) {
             LOGGER.error("There was a problem initializing variables for MapR.", e);
         }
+    }
+
+    private void initMapRTable() {
+        try {
+            hBaseConfiguration = HBaseConfiguration.create();
+            hBaseConfiguration.set("hbase.table.namespace.mappings","*:pipeline");
+            hBaseConfiguration.set("mapr.htable.impl","com.mapr.fs.MapRHTable");
+            hBaseConfiguration.set("fs.default.name", "maprfs://MapR_EMR.amazonaws.com ip-10-72-222-97.ec2.internal:7222 ip-10-72-207-57.ec2.internal:7222");
+            hBaseConfiguration.set("fs.maprfs.impl", "com.mapr.fs.MapRFileSystem");
+            table = new HTable(hBaseConfiguration, MAPR_TABLE_NAME);
+
+            LOGGER.info("Table configuration: " + table.getConfiguration().get("mapr.htable.impl"));
+
+        } catch (Exception e) {
+            LOGGER.error("Error connecting to the mapr table: ", e);
+        }
+        LOGGER.info("Done initialing......");
     }
 
     @Override
@@ -105,7 +141,7 @@ public class MapRWriter extends RunnableWriter {
 
                         }
                         case MAPR_HIVE_UNCOMPRESSED: {
-
+                            writeRawUncompressedToMapRTable(json);
                         }
                         case MAPR_HIVE_COMPRESSED: {
 
@@ -138,6 +174,15 @@ public class MapRWriter extends RunnableWriter {
                 LOGGER.error("Unknown error closing filesystem.", e);
             }
         }
+
+        if(table != null) {
+            try {
+                table.close();
+            } catch (IOException e) {
+                LOGGER.error("Error closing HTable object", e);
+            }
+        }
+
     }
 
     private boolean shouldContinue() {
@@ -160,19 +205,57 @@ public class MapRWriter extends RunnableWriter {
         }
     }
 
-//    private ObjectMapper mapper;
-//
-//    private Map<String, Object> createMessageMap(String json) {
-//        Map<String, Object> messageMap;
-//
-//        try {
-//            messageMap = mapper.readValue(json.getBytes(), new TypeReference<Map<String, Object>>() {});
-//            messageMap.put("source", "twitter");
-//        } catch (IOException e) {
-//            LOGGER.error("ERROR", e);
-//            return null;
-//        }
-//
-//        return messageMap;
-//    }
+    private void writeRawUncompressedToMapRTable(String jsonString) {
+        LOGGER.info("Twitter Message - " + jsonString);
+
+        String idString = null;
+
+        try {
+            Map<String, Object> messageMap = createMessageMap(jsonString);
+            Object id = messageMap != null ? messageMap.get("id_str") : null;
+            Object text = messageMap != null? messageMap.get("text") : null;
+            Object createdDate = messageMap != null? messageMap.get("created_at") : null;
+
+            idString = id != null ? (String)id : null;
+            String textAsString = text != null? (String)text : null;
+            Date createdAt = getTwitterDate((String)createdDate);
+
+            if(id != null) {
+                LOGGER.info(String.format("Adding: id: %s, text: %s, dt: %s, all: %s", idString, textAsString, createdAt.getTime(), jsonString));
+
+                Put p = new Put(Bytes.toBytes(idString));
+                p.add(Bytes.toBytes("all"), Bytes.toBytes("all"),Bytes.toBytes(jsonString));
+                p.add(Bytes.toBytes("text"), Bytes.toBytes("text"),Bytes.toBytes(textAsString));
+                p.add(Bytes.toBytes("dt"), Bytes.toBytes("dt"),Bytes.toBytes(createdAt.getTime()));
+
+                table.put(p);
+            }
+        }
+        catch(Exception e) {
+            LOGGER.error(String.format("Error occurred saving id: %s.", idString), e);
+        }
+    }
+
+    private Map<String, Object> createMessageMap(String json) {
+        Map<String, Object> messageMap;
+
+        try {
+            messageMap = mapper.readValue(json.getBytes(), new TypeReference<Map<String, Object>>() {});
+            messageMap.put("source", "twitter");
+        } catch (IOException e) {
+            LOGGER.error("ERROR", e);
+            return null;
+        }
+
+        return messageMap;
+    }
+
+    public Date getTwitterDate(String date) throws ParseException {
+        if(date != null) {
+            SimpleDateFormat sf = new SimpleDateFormat(TWITTER);
+            sf.setLenient(true);
+            return sf.parse(date);
+        }
+        return null;
+    }
 }

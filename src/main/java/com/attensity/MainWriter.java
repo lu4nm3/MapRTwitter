@@ -94,9 +94,10 @@ public class MainWriter {
         String mode = configuration.getString(Configuration.WRITE_MODE);
         int numWriters = configuration.getInt(Configuration.NUM_WRITERS);
 
+        LOGGER.info("Mode is " + mode);
         for (int i = 0; i < numWriters; i++) {
-            if (mode.equals(WriteMode.MAPR_RAW_UNCOMPRESSED.getValue())) {
-                writers.add(new MapRWriter(configuration, messages, messageQueue, WriteMode.MAPR_RAW_UNCOMPRESSED));
+            if (mode.equals(WriteMode.MAPR_HIVE_UNCOMPRESSED.getValue())) {
+                writers.add(new MapRWriter(configuration, messages, messageQueue, WriteMode.MAPR_HIVE_UNCOMPRESSED));
             }
         }
     }

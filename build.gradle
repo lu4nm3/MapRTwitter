@@ -25,7 +25,9 @@ dependencies {
             'org.slf4j:slf4j-api:1.7.7',        // Apache License 2.0
             'commons-daemon:commons-daemon:1.0.15',
             'org.codehaus.jackson:jackson-core-asl:1.8.4',
-            'org.codehaus.jackson:jackson-mapper-asl:1.8.4'
+            'org.codehaus.jackson:jackson-mapper-asl:1.8.4',
+            'com.mapr.fs:mapr-hbase:1.0.3-mapr-3.0.2',
+            'org.apache.hbase:hbase:0.94.12-mapr-1310-m7-3.0.2'
 
     compile 'com.twitter:hbc-core:2.0.1',
             'org.twitter4j:twitter4j-core:4.0.1'
