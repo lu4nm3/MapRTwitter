@@ -1,10 +1,10 @@
 package com.attensity;
 
+import com.mapr.fs.MapRFileSystem;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class MainReader {
 
     // MapR
     private Configuration conf;
-    private FileSystem fileSystem;
+    private MapRFileSystem fileSystem;
     private Path rFilePath;
     private FSDataInputStream inputStream;
 
@@ -40,7 +40,8 @@ public class MainReader {
     }
 
     private void init() {
-        configuration = ConfigFactory.parseFile(new File("configuration/application.conf"));
+        configuration = ConfigFactory.parseFile(new File("configuration/application.conf")).withFallback(ConfigFactory.load());
+
 
         initMapR();
     }
@@ -48,7 +49,9 @@ public class MainReader {
     private void initMapR() {
         conf = new Configuration();
         try {
-            fileSystem = FileSystem.get(conf);
+//            fileSystem = FileSystem.get(conf);
+            fileSystem = new MapRFileSystem();//MapRFileSystem.get(conf);
+            fileSystem.setConf(conf);
             String dirName = configuration.getString(com.attensity.configuration.Configuration.MapR.Raw.DIR_NAME);
             rFilePath = new Path(dirName + "/file.w");
             inputStream = fileSystem.open(rFilePath);
@@ -86,6 +89,17 @@ public class MainReader {
                 LOGGER.error("Unable to close MapR input stream.", e);
             } catch (Exception e) {
                 LOGGER.error("Unknown error closing MapR input stream.", e);
+            }
+        }
+
+        if (null != fileSystem) {
+            try {
+                fileSystem.close();
+                LOGGER.info("Finished writing to MapR.");
+            } catch (IOException e) {
+                LOGGER.error("Unable to close filesystem.", e);
+            } catch (Exception e) {
+                LOGGER.error("Unknown error closing filesystem.", e);
             }
         }
 

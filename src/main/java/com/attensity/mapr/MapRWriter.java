@@ -2,6 +2,7 @@ package com.attensity.mapr;
 
 import com.attensity.WriteMode;
 import com.attensity.core.RunnableWriter;
+import com.mapr.fs.MapRFileSystem;
 import com.typesafe.config.Config;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -61,16 +62,24 @@ public class MapRWriter extends RunnableWriter {
             long blockSize = configuration.getLong(com.attensity.configuration.Configuration.MapR.Raw.BLOCK_SIZE);
 
             conf = new Configuration();
-            fileSystem = FileSystem.get(conf);
+//            fileSystem = FileSystem.get(conf);
+//            fileSystem = DistributedFileSystem.get(conf);
+//            fileSystem = new MapRFileSystem();//MapRFileSystem.get(conf);
+            fileSystem = MapRFileSystem.get(conf);
+//            fileSystem.setConf(conf);
             dirPath = new Path(dirName + "/dir");
             wFilePath = new Path(dirName + "/file.w");
             //rFilePath = wFilePath;//new Path(DIR_NAME + "file.r");
 
-            outputStream = fileSystem.create(wFilePath,
-                                             overwrite,
-                                             bufferSize,
-                                             (short) replication,
-                                             blockSize);
+            if (fileSystem.exists(wFilePath)) {
+                fileSystem.delete(wFilePath, true);
+            }
+
+            outputStream = fileSystem.create(wFilePath);//,
+//                                             overwrite,
+//                                             bufferSize,
+//                                             (short) replication,
+//                                             blockSize);
 
             LOGGER.info("wFilePath - " + wFilePath);
 //            inputStream = fileSystem.open(rFilePath);
@@ -116,6 +125,17 @@ public class MapRWriter extends RunnableWriter {
                 LOGGER.error("Unable to close MapR output stream.", e);
             } catch (Exception e) {
                 LOGGER.error("Unknown error closing MapR output stream.", e);
+            }
+        }
+
+        if (null != fileSystem) {
+            try {
+                fileSystem.close();
+                LOGGER.info("Finished writing to MapR.");
+            } catch (IOException e) {
+                LOGGER.error("Unable to close filesystem.", e);
+            } catch (Exception e) {
+                LOGGER.error("Unknown error closing filesystem.", e);
             }
         }
     }
